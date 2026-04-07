@@ -1,0 +1,201 @@
+@import "../theme.css";
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "JetBrains Mono", monospace;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--base);
+  color: var(--text);
+}
+
+header {
+  border-bottom: 2px solid var(--mauve);
+  padding-bottom: 16px;
+  margin-bottom: 32px;
+}
+
+h1 {
+  color: var(--mauve);
+  font-size: 24px;
+}
+
+.subtitle {
+  color: var(--overlay1);
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+/* --- Endpoint Card --- */
+
+.endpoint-card {
+  background: var(--surface0);
+  border-radius: 1rem;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.endpoint-header:hover {
+  background: var(--surface1);
+}
+
+.method-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.method-get {
+  background: var(--mauve);
+  color: var(--crust);
+}
+
+.endpoint-path {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.endpoint-desc {
+  color: var(--overlay1);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.chevron {
+  color: var(--overlay0);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.endpoint-card.open .chevron {
+  transform: rotate(90deg);
+}
+
+/* --- Expanded body --- */
+
+.endpoint-body {
+  display: none;
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--surface1);
+}
+
+.endpoint-card.open .endpoint-body {
+  display: block;
+}
+
+.param-section {
+  margin: 12px 0;
+}
+
+.param-section h4 {
+  color: var(--yellow);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.param-row label {
+  font-size: 13px;
+  color: var(--subtext0);
+  min-width: 60px;
+}
+
+.param-row input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--surface1);
+  border-radius: 0.5rem;
+  background: var(--mantle);
+  color: var(--text);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.param-row input:focus {
+  border-color: var(--mauve);
+}
+
+.btn-execute {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--mauve);
+  color: var(--crust);
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 4px;
+}
+
+.endpoint-body > .btn-execute:first-child {
+  margin-top: 12px;
+}
+
+.btn-execute:hover {
+  opacity: 0.85;
+}
+
+/* --- Response --- */
+
+.response-section {
+  margin-top: 14px;
+}
+
+.response-section h4 {
+  color: var(--green);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.response-box {
+  background: var(--mantle);
+  border: 1px solid var(--surface1);
+  border-radius: 0.5rem;
+  padding: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--green);
+  min-height: 40px;
+}
+
+.response-box.error {
+  color: var(--red);
+}
+
+.response-status {
+  font-size: 12px;
+  color: var(--overlay1);
+  margin-bottom: 4px;
+}

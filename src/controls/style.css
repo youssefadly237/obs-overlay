@@ -1,0 +1,123 @@
+@import "../theme.css";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "JetBrains Mono", monospace;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--base);
+  color: var(--text);
+}
+
+h1 {
+  color: var(--mauve);
+  border-bottom: 2px solid var(--mauve);
+  padding-bottom: 10px;
+}
+
+h2 {
+  color: var(--lavender);
+  margin-top: 30px;
+}
+
+h3 {
+  color: var(--text);
+}
+
+.card {
+  background: var(--surface0);
+  border-radius: 1rem;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    transform 0.1s,
+    opacity 0.2s;
+}
+
+button:hover {
+  opacity: 0.85;
+  transform: scale(1.02);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-show {
+  background: var(--mauve);
+  color: var(--crust);
+}
+
+.btn-hide {
+  background: var(--red);
+  color: var(--crust);
+}
+
+.btn-hide-all {
+  background: var(--yellow);
+  color: var(--crust);
+}
+
+.btn-quick {
+  background: var(--blue);
+  color: var(--crust);
+}
+
+#status {
+  display: none;
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 1rem;
+  background: var(--mantle);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+}
+
+#status:not(:empty) {
+  display: block;
+}
+
+#logs {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.log {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--surface1);
+}
+
+.log-time {
+  color: var(--overlay0);
+}
+
+.log-req {
+  color: var(--mauve);
+}
+
+.log-res {
+  color: var(--green);
+}
