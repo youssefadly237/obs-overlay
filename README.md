@@ -11,3 +11,9 @@ this is my first time using GSAP btw
 - `/overlay/`
 - `/controls/`
 - `/api/`
+
+## screenshots
+
+![menu](./docs/screenshots/menu.png)
+![ctl-panel](./docs/screenshots/ctl-panel.png)
+![api](./docs/screenshots/api.png)
