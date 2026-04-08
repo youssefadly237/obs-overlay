@@ -10,7 +10,13 @@ export interface OverlayConfig {
 }
 
 const overlays: Record<string, OverlayConfig> = {};
-let currentOverlay: string | null = null;
+const activeOverlays = new Map<
+  string,
+  {
+    container: HTMLElement;
+    layer?: number;
+  }
+>();
 
 export const overlayAPI = {
   register(name: string, config: OverlayConfig) {
@@ -20,7 +26,7 @@ export const overlayAPI = {
   show(
     name: string,
     options: Record<string, unknown> = {},
-    behavior: { force?: boolean } = {},
+    behavior: { force?: boolean; layer?: number } = {},
   ) {
     const config = overlays[name];
     if (!config) {
@@ -28,35 +34,88 @@ export const overlayAPI = {
       return;
     }
 
-    if (currentOverlay === name && !behavior.force) return;
-    if (currentOverlay) this.hide(currentOverlay);
+    if (activeOverlays.has(name) && !behavior.force) {
+      if (typeof behavior.layer === "number") {
+        this.setLayer(name, behavior.layer);
+      }
+      return;
+    }
 
-    const container = document.getElementById("overlay-container")!;
+    if (activeOverlays.has(name)) this.hide(name);
+
+    const root = document.getElementById("overlay-container");
+    if (!root) {
+      console.warn('Overlay root container "#overlay-container" not found');
+      return;
+    }
+
+    const container = document.createElement("div");
+    container.className = "overlay-instance";
+    container.dataset.overlayName = name;
+
+    const resolvedLayer =
+      typeof behavior.layer === "number" ? behavior.layer : undefined;
+
+    if (typeof resolvedLayer === "number") {
+      container.style.zIndex = String(resolvedLayer);
+    } else {
+      container.style.removeProperty("z-index");
+    }
+
     container.innerHTML = config.html;
-    currentOverlay = name;
+
+    root.appendChild(container);
+    activeOverlays.set(name, { container, layer: resolvedLayer });
 
     config.onShow?.(container, options);
   },
 
   hide(name: string) {
-    if (currentOverlay !== name) return;
+    const instance = activeOverlays.get(name);
+    if (!instance) return;
 
-    const container = document.getElementById("overlay-container")!;
-    overlays[name]?.onHide?.(container);
+    overlays[name]?.onHide?.(instance.container);
+    instance.container.remove();
+    activeOverlays.delete(name);
+  },
 
-    container.innerHTML = "";
-    currentOverlay = null;
+  setLayer(name: string, layer?: number) {
+    const instance = activeOverlays.get(name);
+    if (!instance) return;
+
+    instance.layer = layer;
+    if (typeof layer === "number") {
+      instance.container.style.zIndex = String(layer);
+    } else {
+      instance.container.style.removeProperty("z-index");
+    }
+  },
+
+  getLayer(name: string) {
+    return activeOverlays.get(name)?.layer;
   },
 
   hideAll() {
-    if (currentOverlay) this.hide(currentOverlay);
+    const names = Array.from(activeOverlays.keys());
+    for (const name of names) {
+      this.hide(name);
+    }
   },
 
   getOverlays() {
     return Object.keys(overlays);
   },
 
+  getActiveOverlays() {
+    return Array.from(activeOverlays.keys());
+  },
+
+  hasActiveOverlay(name: string) {
+    return activeOverlays.has(name);
+  },
+
   getCurrentOverlay() {
-    return currentOverlay;
+    const names = Array.from(activeOverlays.keys());
+    return names.length > 0 ? names[names.length - 1] : null;
   },
 };

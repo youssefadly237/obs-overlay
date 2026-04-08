@@ -15,8 +15,25 @@ export const endpoints: EndpointDef[] = [
   {
     method: "GET",
     path: "/api/state",
-    description: "Get current overlay state",
+    description: "Get active overlays state",
     params: [],
+  },
+  {
+    method: "GET",
+    path: "/api/elements/plain-text",
+    description: "Show plain text element",
+    params: [
+      {
+        name: "text",
+        required: false,
+        description: "Plain text content",
+      },
+      {
+        name: "layer",
+        required: false,
+        description: "Optional z-layer integer (higher value renders on top)",
+      },
+    ],
   },
   {
     method: "GET",
@@ -26,22 +43,15 @@ export const endpoints: EndpointDef[] = [
     params: [
       { name: "text", required: false, description: "splitText text content" },
       {
+        name: "layer",
+        required: false,
+        description: "Optional z-layer integer (higher value renders on top)",
+      },
+      {
         name: "colors",
         required: false,
         description:
           "Comma-separated hex colors for splitText lines (e.g. #fff,#f00,#0f0,#00f)",
-      },
-    ],
-  },
-  {
-    method: "GET",
-    path: "/api/show",
-    description: "Show an overlay by name",
-    params: [
-      {
-        name: "name",
-        required: true,
-        description: "Overlay name (e.g. splitText or plainTextTest)",
       },
     ],
   },

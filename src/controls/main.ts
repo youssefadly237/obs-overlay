@@ -1,6 +1,20 @@
 import "./style.css";
 
-const OVERLAYS = ["splitText", "plainTextTest"];
+interface OverlayControl {
+  name: string;
+  showEndpoint: string;
+}
+
+const OVERLAYS: OverlayControl[] = [
+  {
+    name: "splitText",
+    showEndpoint: "/api/elements/split-text",
+  },
+  {
+    name: "plainText",
+    showEndpoint: "/api/elements/plain-text",
+  },
+];
 
 interface QuickAction {
   label: string;
@@ -44,30 +58,28 @@ async function apiCall(url: string) {
 }
 
 function renderButtons() {
-  for (const name of OVERLAYS) {
+  for (const overlay of OVERLAYS) {
     const section = document.createElement("div");
 
     const showGroup = document.createElement("div");
     showGroup.className = "btn-group";
 
     const heading = document.createElement("h3");
-    heading.textContent = name;
+    heading.textContent = overlay.name;
     section.appendChild(heading);
 
     const showBtn = document.createElement("button");
     showBtn.className = "btn-show";
-    showBtn.textContent = `Show ${name}`;
-    const showEndpoint =
-      name === "splitText"
-        ? "/api/elements/split-text"
-        : `/api/show?name=${encodeURIComponent(name)}`;
-    showBtn.addEventListener("click", () => apiCall(showEndpoint));
+    showBtn.textContent = `Show ${overlay.name}`;
+    showBtn.addEventListener("click", () => apiCall(overlay.showEndpoint));
     showGroup.appendChild(showBtn);
 
     const hideBtn = document.createElement("button");
     hideBtn.className = "btn-hide";
-    hideBtn.textContent = `Hide ${name}`;
-    hideBtn.addEventListener("click", () => apiCall(`/api/hide?name=${name}`));
+    hideBtn.textContent = `Hide ${overlay.name}`;
+    hideBtn.addEventListener("click", () =>
+      apiCall(`/api/hide?name=${encodeURIComponent(overlay.name)}`),
+    );
     showGroup.appendChild(hideBtn);
 
     section.appendChild(showGroup);

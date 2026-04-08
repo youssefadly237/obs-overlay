@@ -1,12 +1,21 @@
 import { overlayAPI } from "../overlay-system";
 import type { OverlayConfig } from "../overlay-system";
+import { escapeHtml } from "../../shared/utils";
 
-const plainTextTest: OverlayConfig = {
-  html: `
-    <div class="plain-test-wrap">
-      <p class="plain-test-text">Overlay pipeline works</p>
-    </div>
-  `,
+const plainTextOverlay: OverlayConfig = {
+  html: "",
+  onShow(container, options) {
+    const text =
+      typeof options?.text === "string" && options.text.trim().length > 0
+        ? options.text.trim()
+        : "Overlay pipeline works";
+
+    container.innerHTML = `
+      <div class="plain-test-wrap">
+        <p class="plain-test-text">${escapeHtml(text)}</p>
+      </div>
+    `;
+  },
 };
 
-overlayAPI.register("plainTextTest", plainTextTest);
+overlayAPI.register("plainText", plainTextOverlay);

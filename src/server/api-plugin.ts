@@ -5,15 +5,16 @@ import type {
   OverlayOptions,
   OverlayState,
 } from "../shared/contracts";
-import type { SplitTextOptions } from "../shared/element-types";
+import type {
+  PlainTextOptions,
+  SplitTextOptions,
+} from "../shared/element-types";
 
 type ApiRequest = IncomingMessage & { url?: string };
 type ApiResponse = ServerResponse<IncomingMessage>;
 
 const state: OverlayState = {
-  currentOverlay: null,
-  currentOptions: null,
-  currentTransient: false,
+  activeOverlays: {},
 };
 
 const eventClients = new Set<ApiResponse>();
@@ -35,23 +36,66 @@ function broadcastAction(action: OverlayAction) {
   sendEvent("overlay", action);
 }
 
-function showOverlay(name: string, options?: OverlayOptions) {
-  state.currentOverlay = name;
-  state.currentOptions = options ?? null;
-  state.currentTransient = false;
-  broadcastAction({ type: "show", name, at: Date.now(), options });
+function parseLayerParam(params: URLSearchParams): {
+  layer?: number;
+  error?: string;
+} {
+  const rawLayer = params.get("layer");
+  if (!rawLayer) {
+    return {};
+  }
+
+  if (!/^-?\d+$/.test(rawLayer)) {
+    return { error: 'Invalid "layer" query parameter; expected integer' };
+  }
+
+  return { layer: Number.parseInt(rawLayer, 10) };
+}
+
+function showOverlay(name: string, options?: OverlayOptions, layer?: number) {
+  const entry: OverlayState["activeOverlays"][string] = {
+    options: options ?? null,
+    transient: false,
+  };
+
+  if (typeof layer === "number") {
+    entry.layer = layer;
+  }
+
+  state.activeOverlays[name] = entry;
+  broadcastAction({
+    type: "show",
+    name,
+    at: Date.now(),
+    options,
+    layer,
+  });
 }
 
 function triggerTransientOverlay(
   name: string,
   options: OverlayOptions | undefined,
+  layer?: number,
 ) {
   // Keep state visible while active, but mark as transient for clients to avoid replay on reconnect.
-  state.currentOverlay = name;
-  state.currentOptions = options ?? null;
-  state.currentTransient = true;
+  const entry: OverlayState["activeOverlays"][string] = {
+    options: options ?? null,
+    transient: true,
+  };
 
-  broadcastAction({ type: "show", name, at: Date.now(), options });
+  if (typeof layer === "number") {
+    entry.layer = layer;
+  }
+
+  state.activeOverlays[name] = entry;
+
+  broadcastAction({
+    type: "show",
+    name,
+    at: Date.now(),
+    options,
+    layer,
+  });
 }
 
 function parseSplitTextOptions(
@@ -78,7 +122,19 @@ function parseSplitTextOptions(
     : undefined;
 }
 
-function toOverlayOptions(
+function parsePlainTextOptions(
+  params: URLSearchParams,
+): PlainTextOptions | undefined {
+  const text = params.get("text");
+  if (!text) return undefined;
+
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return undefined;
+
+  return { text: trimmed };
+}
+
+function toSplitTextOverlayOptions(
   options?: SplitTextOptions,
 ): OverlayOptions | undefined {
   if (!options) return undefined;
@@ -89,6 +145,14 @@ function toOverlayOptions(
     result.colors = options.colors;
 
   return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function toPlainTextOverlayOptions(
+  options?: PlainTextOptions,
+): OverlayOptions | undefined {
+  if (!options?.text) return undefined;
+
+  return { text: options.text };
 }
 
 export default function apiPlugin(): Plugin {
@@ -119,9 +183,7 @@ export default function apiPlugin(): Plugin {
             res.flushHeaders?.();
 
             res.write(": connected\n\n");
-            res.write(
-              `event: state\ndata: ${JSON.stringify({ currentOverlay: state.currentOverlay, currentOptions: state.currentOptions, currentTransient: state.currentTransient })}\n\n`,
-            );
+            res.write(`event: state\ndata: ${JSON.stringify(state)}\n\n`);
             eventClients.add(res);
 
             const keepAlive = setInterval(() => {
@@ -136,50 +198,32 @@ export default function apiPlugin(): Plugin {
             return;
           }
 
-          if (url === "/api/show") {
-            const name = params.get("name");
-            if (!name) {
-              return json(
-                res,
-                { success: false, error: 'Missing "name" query parameter' },
-                400,
-              );
+          if (url === "/api/elements/plain-text") {
+            const { layer, error: layerError } = parseLayerParam(params);
+            if (layerError) {
+              return json(res, { success: false, error: layerError }, 400);
             }
 
-            let overlayName = name;
-            const parsedOptions = parseSplitTextOptions(params);
-            const options = parsedOptions ? { ...parsedOptions } : {};
+            const parsedOptions = parsePlainTextOptions(params);
+            const finalOptions = toPlainTextOverlayOptions(parsedOptions);
 
-            if (overlayName === "questionTime") {
-              overlayName = "splitText";
-              if (!("text" in options)) {
-                options.text = "Question Time";
-              }
-            }
-
-            const finalOptions = toOverlayOptions(
-              Object.keys(options).length > 0 ? options : undefined,
-            );
-
-            if (overlayName === "splitText") {
-              triggerTransientOverlay("splitText", finalOptions);
-              return json(res, {
-                success: true,
-                overlay: "splitText",
-                transient: true,
-                options: finalOptions ?? null,
-              });
-            }
-
-            showOverlay(overlayName, finalOptions);
+            showOverlay("plainText", finalOptions, layer);
             return json(res, {
               success: true,
-              overlay: overlayName,
+              element: "plain-text",
+              overlay: "plainText",
+              transient: false,
+              layer: state.activeOverlays.plainText?.layer,
               options: finalOptions ?? null,
             });
           }
 
           if (url === "/api/elements/split-text") {
+            const { layer, error: layerError } = parseLayerParam(params);
+            if (layerError) {
+              return json(res, { success: false, error: layerError }, 400);
+            }
+
             const parsedOptions = parseSplitTextOptions(params);
             const options = parsedOptions ? { ...parsedOptions } : {};
 
@@ -187,14 +231,15 @@ export default function apiPlugin(): Plugin {
               options.text = "SplitText";
             }
 
-            const finalOptions = toOverlayOptions(options);
+            const finalOptions = toSplitTextOverlayOptions(options);
 
-            triggerTransientOverlay("splitText", finalOptions);
+            triggerTransientOverlay("splitText", finalOptions, layer);
             return json(res, {
               success: true,
               element: "split-text",
               overlay: "splitText",
               transient: true,
+              layer: state.activeOverlays.splitText?.layer,
               options: finalOptions ?? null,
             });
           }
@@ -204,13 +249,10 @@ export default function apiPlugin(): Plugin {
             const normalizedName = name === "questionTime" ? "splitText" : name;
 
             if (normalizedName) {
-              if (state.currentOverlay === normalizedName)
-                state.currentOverlay = null;
+              delete state.activeOverlays[normalizedName];
             } else {
-              state.currentOverlay = null;
+              state.activeOverlays = {};
             }
-            state.currentOptions = null;
-            state.currentTransient = false;
             broadcastAction({
               type: "hide",
               name: normalizedName || null,

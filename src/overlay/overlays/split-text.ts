@@ -3,6 +3,7 @@ import { SplitText } from "gsap/SplitText";
 import { overlayAPI } from "../overlay-system";
 import type { OverlayConfig } from "../overlay-system";
 import type { SplitTextOptions } from "../../shared/element-types";
+import { escapeHtml } from "../../shared/utils";
 
 gsap.registerPlugin(SplitText);
 
@@ -68,15 +69,6 @@ function normalizeOptions(
     text,
     colors: colors.length > 0 ? colors : DEFAULT_COLORS,
   };
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
 
 function buildMarkup(options: Required<SplitTextOptions>): string {

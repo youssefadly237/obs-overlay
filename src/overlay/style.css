@@ -30,6 +30,12 @@ html {
   z-index: 9999;
 }
 
+.overlay-instance {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .split-text-container {
   position: absolute;
   top: 0;

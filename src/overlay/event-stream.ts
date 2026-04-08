@@ -12,7 +12,10 @@ function parseEventData<T>(event: MessageEvent<string>): T | null {
 
 function handleAction(action: OverlayAction) {
   if (action.type === "show" && action.name) {
-    overlayAPI.show(action.name, action.options ?? {}, { force: true });
+    overlayAPI.show(action.name, action.options ?? {}, {
+      force: true,
+      layer: action.layer,
+    });
     return;
   }
 
@@ -38,18 +41,33 @@ export function startOverlaySync() {
     const state = parseEventData<OverlayState>(event as MessageEvent<string>);
     if (!state) return;
 
-    if (state.currentOverlay) {
-      if (state.currentTransient) {
-        return;
-      }
+    const entries = Object.entries(state.activeOverlays);
+    const snapshotNames = new Set(entries.map(([name]) => name));
 
-      if (overlayAPI.getCurrentOverlay() !== state.currentOverlay) {
-        overlayAPI.show(state.currentOverlay, state.currentOptions ?? {});
+    for (const activeName of overlayAPI.getActiveOverlays()) {
+      if (!snapshotNames.has(activeName)) {
+        overlayAPI.hide(activeName);
       }
-      return;
     }
 
-    overlayAPI.hideAll();
+    for (const [name, overlayState] of entries) {
+      if (overlayState.transient) {
+        // Never replay transient overlays from state snapshots.
+        continue;
+      }
+
+      const layer =
+        typeof overlayState.layer === "number" ? overlayState.layer : undefined;
+
+      if (!overlayAPI.hasActiveOverlay(name)) {
+        overlayAPI.show(name, overlayState.options ?? {}, { layer });
+        continue;
+      }
+
+      if (overlayAPI.getLayer(name) !== layer) {
+        overlayAPI.setLayer(name, layer);
+      }
+    }
   });
 
   stream.onerror = () => {

@@ -5,10 +5,15 @@ export interface OverlayAction {
   name: string | null;
   at: number;
   options?: OverlayOptions;
+  layer?: number;
+}
+
+export interface OverlayStateEntry {
+  options: OverlayOptions | null;
+  transient: boolean;
+  layer?: number;
 }
 
 export interface OverlayState {
-  currentOverlay: string | null;
-  currentOptions: OverlayOptions | null;
-  currentTransient: boolean;
+  activeOverlays: Record<string, OverlayStateEntry>;
 }
